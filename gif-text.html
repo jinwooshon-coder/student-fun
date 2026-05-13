@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111318">
+<title>✨ GIF 글자 애니메이션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#E8A200;--gold-lt:#f5c842;
+  --bg:#111318;--surface:#1c2028;--surface2:#252b36;
+  --text:#f0f0f0;--text-lt:#a0a8b8;
+  --teal:#6eb5a6;--radius:14px;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:48px;-webkit-tap-highlight-color:transparent}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1c2028 0%,#252b36 100%);padding:18px 20px 14px;border-bottom:1px solid rgba(232,162,0,0.2);display:flex;align-items:center;gap:10px}
+.header-icon{font-size:26px}
+.header-title{font-size:20px;font-weight:900;color:var(--gold);letter-spacing:-.5px}
+.header-sub{font-size:12px;color:var(--text-lt);margin-left:auto}
+
+/* MAIN */
+.main{padding:16px;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,0.06)}
+.lbl{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+
+/* TEXTAREA */
+textarea{width:100%;border:2px solid rgba(232,162,0,0.3);border-radius:10px;padding:12px 14px;font-size:20px;font-family:'Noto Sans KR',sans-serif;font-weight:900;resize:none;outline:none;color:var(--text);background:var(--surface2);min-height:64px;transition:border-color .2s}
+textarea:focus{border-color:var(--gold)}
+
+/* ANIM GRID */
+.anim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.anim-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 8px;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:var(--surface2);color:var(--text-lt);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;cursor:pointer;gap:4px;transition:all .15s}
+.anim-btn .ai{font-size:26px}
+.anim-btn.active{border-color:var(--gold);background:rgba(232,162,0,0.12);color:var(--gold)}
+
+/* SLIDERS */
+.sl-row{display:flex;align-items:center;gap:12px}
+input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
+.sl-val{font-size:14px;font-weight:700;color:var(--gold);min-width:48px;text-align:right}
+
+/* COLOR DOTS */
+.color-row{display:flex;gap:10px;flex-wrap:wrap}
+.dot{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;flex-shrink:0}
+.dot.active{border-color:var(--gold);transform:scale(1.2)}
+.td-dot{background:repeating-conic-gradient(#555 0% 25%,#333 0% 50%) 0 0/10px 10px}
+
+/* PREVIEW */
+.preview-card{background:#000;border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid rgba(232,162,0,0.15)}
+#previewCanvas{border-radius:10px;max-width:100%}
+.preview-hint{font-size:12px;color:var(--text-lt)}
+
+/* BUTTONS */
+.btn-gold{width:100%;padding:18px;border-radius:var(--radius);border:none;background:var(--gold);color:#111;font-size:18px;font-weight:900;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(232,162,0,0.3);letter-spacing:-.3px}
+.btn-gold:active{transform:scale(.97);filter:brightness(.92)}
+.btn-gold:disabled{background:#444;color:#888;box-shadow:none;cursor:not-allowed}
+
+/* PROGRESS */
+.progress-wrap{width:100%;background:var(--surface2);border-radius:50px;height:10px;overflow:hidden;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));border-radius:50px;transition:width .1s;width:0%}
+
+.hint{text-align:center;font-size:12px;color:var(--text-lt);padding-top:2px}
+
+/* RESULT */
+.result-card{background:var(--surface);border-radius:var(--radius);padding:20px;border:2px solid var(--gold);display:none;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.result-card.show{display:flex}
+.result-gif{max-width:100%;border-radius:10px}
+.result-title{font-size:16px;font-weight:900;color:var(--gold)}
+
+/* CHIP */
+.chip-row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:50px;border:2px solid rgba(255,255,255,0.1);background:var(--surface2);color:var(--text-lt);font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s}
+.chip.active{border-color:var(--gold);background:rgba(232,162,0,0.12);color:var(--gold)}
+
+.status-text{font-size:13px;color:var(--text-lt);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-icon">🌀</span>
+  <span class="header-title">GIF 애니메이션</span>
+  <span class="header-sub">우주 격파용 😈</span>
+</div>
+
+<div class="main">
+
+  <!-- 텍스트 -->
+  <div class="card">
+    <div class="lbl">📝 텍스트</div>
+    <textarea id="txt" rows="2" placeholder="애니메이션할 텍스트...">선생님이 최고</textarea>
+  </div>
+
+  <!-- 애니메이션 종류 -->
+  <div class="card">
+    <div class="lbl">🎬 애니메이션 종류</div>
+    <div class="anim-grid">
+      <button class="anim-btn active" data-anim="spin">
+        <span class="ai">🌀</span><span>빙글빙글</span>
+      </button>
+      <button class="anim-btn" data-anim="bounce">
+        <span class="ai">🏀</span><span>튕기기</span>
+      </button>
+      <button class="anim-btn" data-anim="pulse">
+        <span class="ai">💓</span><span>두근두근</span>
+      </button>
+      <button class="anim-btn" data-anim="wave">
+        <span class="ai">🌊</span><span>물결흔들기</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 글자 크기 -->
+  <div class="card">
+    <div class="lbl">🔤 글자 크기</div>
+    <div class="sl-row">
+      <input type="range" id="sz" min="24" max="100" value="56">
+      <span class="sl-val" id="szVal">56px</span>
+    </div>
+  </div>
+
+  <!-- 굵기 -->
+  <div class="card">
+    <div class="lbl">💪 굵기</div>
+    <div class="chip-row">
+      <button class="chip" data-w="400">보통</button>
+      <button class="chip" data-w="700">두꺼움</button>
+      <button class="chip active" data-w="900">최대</button>
+    </div>
+  </div>
+
+  <!-- 배경색 -->
+  <div class="card">
+    <div class="lbl">🎨 배경</div>
+    <div class="color-row">
+      <div class="dot active" data-bg="#111111" style="background:#111"></div>
+      <div class="dot" data-bg="#ffffff" style="background:#fff;box-shadow:inset 0 0 0 1px #555"></div>
+      <div class="dot" data-bg="#FAE100" style="background:#FAE100"></div>
+      <div class="dot" data-bg="#1a1a2e" style="background:#1a1a2e"></div>
+      <div class="dot" data-bg="#6eb5a6" style="background:#6eb5a6"></div>
+      <div class="dot" data-bg="#ff4757" style="background:#ff4757"></div>
+    </div>
+  </div>
+
+  <!-- 글자색 -->
+  <div class="card">
+    <div class="lbl">✏️ 글자색</div>
+    <div class="color-row">
+      <div class="dot active" data-tc="#ffffff" style="background:#fff;box-shadow:inset 0 0 0 1px #555"></div>
+      <div class="dot" data-tc="#E8A200" style="background:#E8A200"></div>
+      <div class="dot" data-tc="#FAE100" style="background:#FAE100"></div>
+      <div class="dot" data-tc="#6eb5a6" style="background:#6eb5a6"></div>
+      <div class="dot" data-tc="#ff4757" style="background:#ff4757"></div>
+      <div class="dot" data-tc="#111111" style="background:#111"></div>
+    </div>
+  </div>
+
+  <!-- 속도 -->
+  <div class="card">
+    <div class="lbl">⚡ 속도</div>
+    <div class="chip-row">
+      <button class="chip" data-speed="120">느리게</button>
+      <button class="chip active" data-speed="60">보통</button>
+      <button class="chip" data-speed="30">빠르게</button>
+    </div>
+  </div>
+
+  <!-- 미리보기 -->
+  <div class="preview-card">
+    <div class="lbl" style="margin:0;color:var(--gold)">👀 미리보기</div>
+    <canvas id="previewCanvas" width="360" height="200"></canvas>
+    <div class="preview-hint">실제 GIF와 동일한 모습이에요</div>
+  </div>
+
+  <!-- 만들기 버튼 -->
+  <button class="btn-gold" id="makeBtn">🎬 GIF 만들기</button>
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="status-text" id="statusText"></div>
+
+  <!-- 결과 -->
+  <div class="result-card" id="resultCard">
+    <div class="result-title">🎉 완성!</div>
+    <img class="result-gif" id="resultImg" src="" alt="GIF">
+    <button class="btn-gold" id="dlBtn" style="margin-top:4px">📥 GIF 저장하기</button>
+    <p class="hint">저장 후 카카오로 보내세요! 우주 격파 😈</p>
+  </div>
+
+</div>
+
+<script>
+const S = {
+  text: '선생님이 최고',
+  anim: 'spin',
+  fontSize: 56,
+  fontWeight: '900',
+  bgColor: '#111111',
+  textColor: '#ffffff',
+  frameDelay: 60,
+};
+
+const CW = 360, CH = 200;
+const FRAMES = 24;
+
+// ── PREVIEW ──
+const previewCanvas = document.getElementById('previewCanvas');
+const pCtx = previewCanvas.getContext('2d');
+previewCanvas.width = CW;
+previewCanvas.height = CH;
+
+let animFrame = 0, rafId = null;
+
+function renderFrame(ctx, fi, total, w, h) {
+  const t = fi / total;
+  const cx = w / 2, cy = h / 2;
+
+  // BG
+  ctx.fillStyle = S.bgColor;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const font = `${S.fontWeight} ${S.fontSize}px 'Noto Sans KR',sans-serif`;
+  ctx.font = font;
+  ctx.fillStyle = S.textColor;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  switch(S.anim) {
+    case 'spin':
+      ctx.rotate(t * Math.PI * 2);
+      ctx.fillText(S.text, 0, 0);
+      break;
+
+    case 'bounce':
+      ctx.translate(0, Math.sin(t * Math.PI * 2) * 45);
+      ctx.fillText(S.text, 0, 0);
+      break;
+
+    case 'pulse': {
+      const sc = 1 + 0.35 * Math.sin(t * Math.PI * 2);
+      ctx.scale(sc, sc);
+      ctx.fillText(S.text, 0, 0);
+      break;
+    }
+
+    case 'wave': {
+      ctx.restore();
+      ctx.save();
+      const chars = S.text.split('');
+      const totalW = ctx.measureText(S.text).width;
+      let x = cx - totalW / 2;
+      chars.forEach((ch, i) => {
+        const charW = ctx.measureText(ch).width;
+        const phase = (i / chars.length + t) * Math.PI * 2;
+        const dy = Math.sin(phase) * 20;
+        ctx.font = font;
+        ctx.fillStyle = S.textColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ch, x, cy + dy);
+        x += charW;
+      });
+      ctx.restore();
+      return;
+    }
+  }
+
+  ctx.restore();
+}
+
+function animate() {
+  renderFrame(pCtx, animFrame % FRAMES, FRAMES, CW, CH);
+  animFrame++;
+  rafId = requestAnimationFrame(animate);
+}
+
+function startPreview() {
+  if(rafId) cancelAnimationFrame(rafId);
+  animFrame = 0;
+  animate();
+}
+
+// ── CONTROLS ──
+document.getElementById('txt').addEventListener('input', e => { S.text = e.target.value || ' '; });
+document.querySelectorAll('.anim-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.anim-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); S.anim = b.dataset.anim;
+}));
+document.getElementById('sz').addEventListener('input', e => {
+  S.fontSize = +e.target.value;
+  document.getElementById('szVal').textContent = S.fontSize + 'px';
+});
+document.querySelectorAll('.chip[data-w]').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.chip[data-w]').forEach(x => x.classList.remove('active'));
+  c.classList.add('active'); S.fontWeight = c.dataset.w;
+}));
+document.querySelectorAll('.dot[data-bg]').forEach(d => d.addEventListener('click', () => {
+  document.querySelectorAll('.dot[data-bg]').forEach(x => x.classList.remove('active'));
+  d.classList.add('active'); S.bgColor = d.dataset.bg;
+}));
+document.querySelectorAll('.dot[data-tc]').forEach(d => d.addEventListener('click', () => {
+  document.querySelectorAll('.dot[data-tc]').forEach(x => x.classList.remove('active'));
+  d.classList.add('active'); S.textColor = d.dataset.tc;
+}));
+document.querySelectorAll('.chip[data-speed]').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.chip[data-speed]').forEach(x => x.classList.remove('active'));
+  c.classList.add('active'); S.frameDelay = +c.dataset.speed;
+}));
+
+// ── GIF MAKE ──
+let gifBlobUrl = null;
+
+async function makeGif() {
+  const btn = document.getElementById('makeBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const statusText = document.getElementById('statusText');
+  const resultCard = document.getElementById('resultCard');
+  const resultImg = document.getElementById('resultImg');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 로딩 중...';
+  resultCard.classList.remove('show');
+  progressWrap.classList.add('show');
+  progressBar.style.width = '0%';
+  statusText.textContent = '🔧 GIF 엔진 준비 중...';
+
+  // Load worker as blob to avoid CORS
+  let workerUrl;
+  try {
+    const resp = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+    const text = await resp.text();
+    const blob = new Blob([text], {type:'application/javascript'});
+    workerUrl = URL.createObjectURL(blob);
+  } catch(e) {
+    workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js';
+  }
+
+  // Offscreen canvas for GIF frames
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = CW; offCanvas.height = CH;
+  const offCtx = offCanvas.getContext('2d');
+
+  await document.fonts.ready;
+
+  const gif = new GIF({
+    workers: 2,
+    quality: 8,
+    width: CW,
+    height: CH,
+    workerScript: workerUrl,
+    repeat: 0,
+  });
+
+  statusText.textContent = '🎨 프레임 그리는 중...';
+
+  for(let i = 0; i < FRAMES; i++) {
+    renderFrame(offCtx, i, FRAMES, CW, CH);
+    gif.addFrame(offCtx, {delay: S.frameDelay, copy: true});
+    const pct = Math.round((i / FRAMES) * 60);
+    progressBar.style.width = pct + '%';
+    // yield to browser
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  statusText.textContent = '⚙️ GIF 인코딩 중... (10~30초)';
+
+  gif.on('progress', p => {
+    progressBar.style.width = (60 + p * 40) + '%';
+  });
+
+  gif.on('finished', blob => {
+    if(gifBlobUrl) URL.revokeObjectURL(gifBlobUrl);
+    gifBlobUrl = URL.createObjectURL(blob);
+
+    resultImg.src = gifBlobUrl;
+    document.getElementById('dlBtn').onclick = () => {
+      const a = document.createElement('a');
+      a.href = gifBlobUrl;
+      a.download = '애니글자.gif';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    };
+
+    progressBar.style.width = '100%';
+    statusText.textContent = '';
+    progressWrap.classList.remove('show');
+    resultCard.classList.add('show');
+
+    btn.disabled = false;
+    btn.textContent = '🎬 GIF 다시 만들기';
+
+    resultCard.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+
+  gif.render();
+}
+
+document.getElementById('makeBtn').addEventListener('click', makeGif);
+
+// ── INIT ──
+document.fonts.ready.then(() => startPreview());
+</script>
+</body>
+</html>
