@@ -1,11 +1,11 @@
 {
-  "name": "글자 뒤집기",
-  "short_name": "뒤집기",
-  "description": "한글 텍스트를 뒤집어서 이미지로 저장",
+  "name": "학생 장난 앱",
+  "short_name": "장난앱 😈",
+  "description": "글자 뒤집기 + GIF 애니메이션 + QR 공유",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#e9f5f2",
-  "theme_color": "#6eb5a6",
+  "background_color": "#111318",
+  "theme_color": "#111318",
   "orientation": "portrait",
   "icons": [
     {
